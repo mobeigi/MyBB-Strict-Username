@@ -103,28 +103,27 @@ class strictUsername
     public function __construct()
     {
         global $plugins;
-
+        
         // Add all hooks
-        $plugins->hooks["datahandler_user_validate"][10]["strictUsername_validateUsername"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'strictUsername\']->validateUsername();'));
+        $plugins->hooks["datahandler_user_validate"][10]["strictUsername_validateUsername"] = array("function" => create_function('$userhandler', 'global $plugins; $plugins->objects[\'strictUsername\']->validateUsername($userhandler);'));
         $plugins->hooks["xmlhttp_username_availability"][10]["strictUsername_validateXMLHTTP"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'strictUsername\']->validateXMLHTTP();'));
-        $plugins->hooks["pre_output_page"][10]["strictUsername_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'strictUsername\']->pluginThanks($arg);'));
     }
-
+    
     /**
      * Validate username on standard check (non-AJAX)
      */
-    public function validateUsername()
-    {
-        global $db, $lang, $user, $userhandler;
-
+    public function validateUsername(&$userhandler)
+    {   
+        global $db, $lang;
+        
         if (THIS_SCRIPT != 'member.php' && THIS_SCRIPT != 'usercp.php')
         {
             return;
         }
-
+        
         $this->init();
         $this->setMode($this->getConfig('Mode'));
-        $this->checkUsername($user['username']);
+        $this->checkUsername($userhandler->data["username"]);
 
         if (sizeof($this->wrongChars) > 0)
         {
@@ -140,7 +139,7 @@ class strictUsername
      */
     public function validateXMLHTTP()
     {
-        global $charset, $db, $lang, $mybb, $username;
+        global $charset, $db, $lang, $username;
 
         $this->init();
         $this->setMode($this->getConfig('Mode'));
@@ -259,21 +258,5 @@ class strictUsername
         return $mybb->settings["strictUsername{$name}"];
     }
     
-    /**
-     * Say thanks to plugin author - paste link to author website.
-     * Please don't remove this code if you didn't make donate
-     * It's the only way to say thanks without donate :)     
-     */
-    public function pluginThanks(&$content)
-    {
-        global $session, $lukasamd_thanks;
-        
-        if (!isset($lukasamd_thanks) && $session->is_spider)
-        {
-            $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="https://tkacz.it">Lukasz Tkacz</a> MyBB addons.</div></body>';
-            $content = str_replace('</body>', $thx, $content);
-            $lukasamd_thanks = true;
-        }
-    }
 
 }
